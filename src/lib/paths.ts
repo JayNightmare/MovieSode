@@ -1,7 +1,15 @@
 /**
  * Centralized path helpers for upload/output storage.
- * Assumes local filesystem use (perfect for a personal tool MVP).
+ * Defaults to user Documents/MovieSode for a local-first experience.
  */
 
-export const UPLOAD_DIR = process.env.UPLOAD_DIR || "./uploads";
-export const OUTPUT_DIR = process.env.OUTPUT_DIR || "./output";
+import os from "os";
+import path from "path";
+
+const home = os.homedir();
+const docs = path.join(home, "Documents", "MovieSode");
+
+export const UPLOAD_DIR =
+  process.env.UPLOAD_DIR || path.join(docs, "Uploads"); // where incoming files are saved (if uploaded)
+export const OUTPUT_DIR =
+  process.env.OUTPUT_DIR || path.join(docs, "Episodes"); // where split episodes are written

@@ -14,6 +14,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const os = require("os");
 const { execFile } = require("child_process");
 const { MongoClient, ObjectId } = require("mongodb");
 
@@ -42,8 +43,9 @@ function loadEnvFromFile() {
 loadEnvFromFile();
 
 const MONGODB_URI = process.env.MONGODB_URI;
-const UPLOAD_DIR = process.env.UPLOAD_DIR || "./uploads";
-const OUTPUT_DIR = process.env.OUTPUT_DIR || "./output";
+const docsDir = path.join(os.homedir(), "Documents", "MovieSode");
+const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(docsDir, "Uploads");
+const OUTPUT_DIR = process.env.OUTPUT_DIR || path.join(docsDir, "Episodes");
 
 if (!MONGODB_URI) {
   console.error("Missing MONGODB_URI in environment");
@@ -130,7 +132,11 @@ async function main() {
       throw new Error(`Movie ${movieIdArg} not found`);
     }
 
-    const uploadAbs = path.join(process.cwd(), movie.uploadPath || path.join(UPLOAD_DIR, ""));
+    const uploadAbs = movie.uploadPath
+      ? path.isAbsolute(movie.uploadPath)
+        ? movie.uploadPath
+        : path.join(process.cwd(), movie.uploadPath)
+      : path.join(process.cwd(), UPLOAD_DIR, "");
     if (!fs.existsSync(uploadAbs)) {
       throw new Error(`Upload file missing at ${uploadAbs}`);
     }
@@ -145,7 +151,9 @@ async function main() {
     const segmentSeconds = Math.max(60, Math.round((movie.episodeLengthMin || 22) * 60));
 
     // Clean previous output/docs
-    const movieOutputDir = path.join(process.cwd(), OUTPUT_DIR, movieIdArg);
+    const movieOutputDir = path.isAbsolute(OUTPUT_DIR)
+      ? path.join(OUTPUT_DIR, movieIdArg)
+      : path.join(process.cwd(), OUTPUT_DIR, movieIdArg);
     await fs.promises.rm(movieOutputDir, { recursive: true, force: true });
 
     const outputFiles = await segmentMovie(uploadAbs, movieOutputDir, segmentSeconds);
@@ -170,7 +178,7 @@ async function main() {
         startSec: Math.round(startSec),
         endSec: Math.round(endSec),
         durationSec: Math.round(dur),
-        filePath: path.relative(process.cwd(), absolutePath),
+        filePath: absolutePath,
         streamUrl: `/api/episodes/placeholder`,
         createdAt: new Date(),
         updatedAt: new Date(),

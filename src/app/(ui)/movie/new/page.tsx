@@ -23,6 +23,7 @@ export default function NewMoviePage() {
   const [status, setStatus] = useState<UploadStatus>("idle");
   const [message, setMessage] = useState<string>("");
   const [movieId, setMovieId] = useState<string | null>(null);
+  const [localPath, setLocalPath] = useState<string>("");
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -71,8 +72,8 @@ export default function NewMoviePage() {
           <p className="text-xs uppercase tracking-[0.16em] text-zinc-400">Upload</p>
           <h1 className="text-3xl font-bold tracking-tight text-white">Add a Movie</h1>
           <p className="max-w-2xl text-sm text-zinc-400">
-            Drop in a movie you own. We&apos;ll store it locally in <code className="rounded bg-white/10 px-1">uploads/</code>,
-            create a record in MongoDB, and the next step will segment it into episodes.
+            Drop in a movie you own or point to an existing file path. We&apos;ll keep everything on
+            your computer, kick off processing automatically, and split it into episodes.
           </p>
         </div>
       </section>
@@ -113,9 +114,41 @@ export default function NewMoviePage() {
             <div className="space-y-2">
               <label className="text-sm font-semibold text-zinc-200">Storage</label>
               <p className="rounded-xl border border-white/5 bg-white/5 px-3 py-2 text-xs text-zinc-300">
-                Saved to <code className="bg-zinc-900/80 px-1">./uploads</code> (local disk).
+                Uses your filesystem: uploads stay local, episodes go to{" "}
+                <code className="bg-zinc-900/80 px-1">~/Documents/MovieSode/Episodes</code>.
               </p>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-zinc-200" htmlFor="localFilePath">
+              Or reference an existing file path (skips upload)
+            </label>
+            <input
+              id="localFilePath"
+              name="localFilePath"
+              type="text"
+              placeholder="C:\\Users\\you\\Videos\\movie.mkv"
+              value={localPath}
+              onChange={(e) => setLocalPath(e.target.value)}
+              className="w-full rounded-xl border border-white/10 bg-zinc-900/80 px-3 py-2 text-sm text-white outline-none ring-0 transition focus:border-white/30"
+            />
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  const picked = await window.moviesode?.pickVideoFile?.();
+                  if (picked) setLocalPath(picked);
+                }}
+                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white transition hover:border-white/30"
+              >
+                <Upload className="h-4 w-4" />
+                Use native file picker (Electron)
+              </button>
+            </div>
+            <p className="text-xs text-zinc-500">
+              If provided, we won&apos;t copy the file—processing reads it directly.
+            </p>
           </div>
 
           <div className="space-y-3">
@@ -131,7 +164,6 @@ export default function NewMoviePage() {
                 </div>
               </div>
               <input
-                required
                 name="file"
                 type="file"
                 accept="video/*"
@@ -151,7 +183,7 @@ export default function NewMoviePage() {
               ) : (
                 <Video className="h-4 w-4" />
               )}
-              {status === "uploading" ? "Uploading..." : "Upload Movie"}
+              {status === "uploading" ? "Uploading..." : "Save + Process"}
             </button>
 
             {status === "success" && (
@@ -179,9 +211,20 @@ export default function NewMoviePage() {
             <span className="font-semibold">What happens on upload</span>
           </div>
           <ul className="space-y-2 text-sm text-zinc-400">
-            <li>1) File is written to <code className="bg-zinc-900/70 px-1">./uploads</code> on disk.</li>
-            <li>2) A movie record is created in MongoDB with status <code className="bg-zinc-900/70 px-1">uploaded</code>.</li>
-            <li>3) Next step: background worker (ffmpeg) will cut it into 20-25 minute episodes.</li>
+            <li>
+              1) If you upload, the file is written to your machine (default:
+              <code className="bg-zinc-900/70 px-1">~/Documents/MovieSode/Uploads</code>). If you
+              provide a path, it is used directly (no copy).
+            </li>
+            <li>
+              2) A movie record is created in MongoDB with status{" "}
+              <code className="bg-zinc-900/70 px-1">uploaded</code>, then the background worker
+              starts immediately.
+            </li>
+            <li>
+              3) ffmpeg cuts it into 20-25 minute episodes saved in{" "}
+              <code className="bg-zinc-900/70 px-1">~/Documents/MovieSode/Episodes</code>.
+            </li>
           </ul>
           {movieId && (
             <Link

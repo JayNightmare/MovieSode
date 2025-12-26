@@ -6,6 +6,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BadgeInfo, Clock3, Folder } from "lucide-react";
 import { MovieViewer } from "@/components/MovieViewer";
+import { ProcessingWatcher } from "@/components/ProcessingWatcher";
 import { EpisodeDoc, MovieDoc, ProgressDoc } from "@/types/media";
 
 const statusStyles: Record<MovieDoc["status"], string> = {
@@ -95,6 +96,7 @@ export default async function MoviePage({ params }: { params: Promise<{ id: stri
               <Clock3 className="h-4 w-4" />
               {movie.episodeLengthMin} minute episodes
             </span>
+            <ProcessingWatcher movieId={movie._id} initialStatus={movie.status} />
           </div>
 
           <div className="space-y-2">
