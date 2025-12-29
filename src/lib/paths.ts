@@ -9,7 +9,5 @@ import path from "path";
 const home = os.homedir();
 const docs = path.join(home, "Documents", "MovieSode");
 
-export const UPLOAD_DIR =
-  process.env.UPLOAD_DIR || path.join(docs, "Uploads"); // where incoming files are saved (if uploaded)
-export const OUTPUT_DIR =
-  process.env.OUTPUT_DIR || path.join(docs, "Episodes"); // where split episodes are written
+export const UPLOAD_DIR = path.join(docs, "Uploads"); // where incoming files are saved (if uploaded)
+export const OUTPUT_DIR = path.join(docs, "Episodes"); // where split episodes are written
